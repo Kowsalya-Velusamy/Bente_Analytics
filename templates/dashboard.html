@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bente — Analytics Intelligence Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<!-- ── TOPBAR ──────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <a class="brand" href="#">
+    <div class="brand-mark">B</div>
+    <span class="brand-name">bente<em>.</em>ai</span>
+  </a>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('overview',this)"><span class="tab-icon">◈</span> Overview</button>
+    <button class="nav-tab" onclick="showPage('venues',this)"><span class="tab-icon">◉</span> Venue Analytics</button>
+    <button class="nav-tab" onclick="showPage('visitors',this)"><span class="tab-icon">◎</span> Visitor Insights</button>
+    <button class="nav-tab" onclick="showPage('reviews',this)"><span class="tab-icon">◇</span> Venue Reviews</button>
+    <button class="nav-tab" onclick="showPage('segments',this)"><span class="tab-icon">⬡</span> AI Segmentation</button>
+  </nav>
+  <div class="topbar-right">
+    <div class="date-filter">
+      <input type="date" id="dateStart" class="date-input" title="From date">
+      <span class="date-sep">—</span>
+      <input type="date" id="dateEnd" class="date-input" title="To date">
+      <button class="apply-btn" onclick="applyDateFilter()">Apply</button>
+    </div>
+    <div class="live-badge">
+      <span class="live-dot"></span>&nbsp;<span id="liveBadgeText">Loading…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── OVERVIEW ────────────────────────────────────────────────────── -->
+<div id="page-overview" class="page active">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Platform Overview</div>
+    <h1>All Venues — Performance Summary</h1>
+    <p id="overviewSubtitle">Loading…</p>
+  </div>
+
+  <div class="overview-hero">
+    <div class="hero-card" style="--hc:#00f5c4">
+      <div class="section-label">Total Check-ins</div>
+      <div class="big-num" style="color:var(--accent)" id="heroCheckins">—</div>
+      <div class="big-label" id="heroCheckinsLabel">Across all venues</div>
+    </div>
+    <div class="hero-card" style="--hc:#6c63ff">
+      <div class="section-label">Unique Users</div>
+      <div class="big-num" style="color:#6c63ff" id="heroUsers">—</div>
+      <div class="big-label">Active platform members</div>
+    </div>
+    <div class="hero-card" style="--hc:#f5a623">
+      <div class="section-label">Avg Engagement Score</div>
+      <div class="big-num" style="color:#f5a623" id="heroEngagement">—</div>
+      <div class="big-label">Platform-wide average</div>
+    </div>
+  </div>
+
+  <div class="chart-grid-60-40">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot"></span>Check-ins by Venue</div></div>
+      <canvas id="overviewBarChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#6c63ff"></span>Visit Frequency Distribution</div></div>
+      <canvas id="overviewFreqChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#f5a623"></span>Category Breakdown</div></div>
+      <canvas id="overviewCatChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#e879f9"></span>Weekend vs Weekday</div></div>
+      <canvas id="overviewWkChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#10b981"></span>Top Events Globally</div></div>
+      <canvas id="overviewEventsChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card full">
+    <div class="chart-title" id="overviewTableTitle">
+      <div class="chart-title-left"><span class="ct-dot"></span>Venue Leaderboard</div>
+      <button class="export-btn" id="overviewTableExportBtn">↓ CSV</button>
+    </div>
+    <table class="venue-table" id="overviewTable"></table>
+  </div>
+
+  <!-- Anomaly Alert Panel -->
+  <div class="chart-card full" style="margin-top:16px">
+    <div class="chart-title">
+      <div class="chart-title-left"><span class="ct-dot" style="background:#ff4d6d"></span>⚠ Crowd Density Anomalies</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="anomaly-last-updated" id="anomalyTimestamp"></span>
+        <button class="anomaly-refresh-btn" onclick="refreshAnomalies()">↻ Refresh</button>
+        <button class="export-btn" onclick="exportAnomaliesCSV()">↓ CSV</button>
+      </div>
+    </div>
+    <div id="anomalyContent" style="color:var(--text3);font-size:13px;padding:8px 0">Loading anomalies…</div>
+  </div>
+</div>
+</div>
+
+<!-- ── VENUE ANALYTICS ─────────────────────────────────────────────── -->
+<div id="page-venues" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Venue Analytics</div>
+    <h1>Deep-dive by Venue</h1>
+    <p>Select a venue to explore detailed traffic, timing, and engagement patterns</p>
+  </div>
+
+  <div class="comparison-bar">
+    <button class="compare-toggle" id="compareToggle" onclick="toggleCompare()">⊕ Compare Venues</button>
+    <span class="compare-hint" id="compareHint"></span>
+  </div>
+
+  <div class="venue-selector" id="venueSelector"></div>
+  <div class="kpi-grid" id="venueKpis"></div>
+
+  <div class="chart-grid-60-40">
+    <div class="chart-card tall">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot"></span>Hourly Traffic Pattern <span style="font-size:10px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(click bar to drill down)</span></div></div>
+      <canvas id="hourChart" style="max-height:280px"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#6c63ff"></span>Day of Week <span style="font-size:10px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(click to drill down)</span></div></div>
+      <canvas id="dayChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#f5a623"></span>Visit Frequency</div></div>
+      <canvas id="venueFreqChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#e879f9"></span>Age Group Breakdown</div></div>
+      <canvas id="venueAgeChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#10b981"></span>Top Events at Venue</div></div>
+      <canvas id="venueEventsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Comparison cards rendered here by venues.js -->
+  <div id="compareSection"></div>
+</div>
+</div>
+
+<!-- ── VISITOR INSIGHTS ────────────────────────────────────────────── -->
+<div id="page-visitors" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Visitor Insights</div>
+    <h1>User Behavior & Returning Patterns</h1>
+    <p>New vs returning users, dwell times, and visit frequency across all venues</p>
+  </div>
+
+  <div class="kpi-grid" id="visitorKpis"></div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot"></span>New vs Returning by Venue</div></div>
+      <canvas id="newReturnChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#6c63ff"></span>Average Dwell Time by Venue (min)</div></div>
+      <canvas id="dwellChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#f5a623"></span>Return Frequency — All Venues</div></div>
+      <div class="freq-bars" id="freqBarsAll"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#e879f9"></span>Returning Frequency per Venue</div></div>
+      <canvas id="venueFreqStackChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#10b981"></span>User Status by Age Group</div></div>
+      <canvas id="ageStatusChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card full">
+    <div class="chart-title">
+      <div class="chart-title-left"><span class="ct-dot"></span>Visitor Metrics by Venue</div>
+      <button class="export-btn" id="visitorExportBtn">↓ CSV</button>
+    </div>
+    <table class="venue-table" id="visitorTable"></table>
+  </div>
+</div>
+</div>
+
+<!-- ── VENUE REVIEWS ───────────────────────────────────────────────── -->
+<div id="page-reviews" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Venue Reviews</div>
+    <h1>Quality Metrics & Experience Scores</h1>
+    <p>Derived from engagement, popularity, crowd density, and dwell behavior data</p>
+  </div>
+  <div class="venue-selector" id="reviewVenueSelector"></div>
+  <div class="kpi-grid" id="reviewKpis"></div>
+
+  <div class="chart-grid-60-40">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot"></span>Review Criteria Scores (out of 5)</div></div>
+      <div id="reviewBars"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#6c63ff"></span>Criteria Radar</div></div>
+      <div class="review-radar-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#f5a623"></span>All Venues — Avg Review Score</div></div>
+      <canvas id="allReviewChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#e879f9"></span>Cleanliness vs Atmosphere vs WiFi</div></div>
+      <canvas id="reviewCompareChart"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── AI SEGMENTATION ─────────────────────────────────────────────── -->
+<div id="page-segments" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">AI / ML Intelligence</div>
+    <h1>User Segmentation & Recommendation Engine</h1>
+    <p>Behavioral segmentation using KMeans clustering · Venue-User affinity matching</p>
+  </div>
+
+  <div class="rec-section">
+    <div class="rec-title">🤖 Recommendation Engine Pipeline</div>
+    <div class="rec-subtitle">How users are segmented and matched to optimal venues</div>
+    <div class="algo-flow">
+      <div class="algo-step"><div class="step-num">STEP 01</div><div class="step-name">Feature Extraction</div><div class="step-desc">Engagement, dwell, frequency, venues visited</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 02</div><div class="step-name">Normalization</div><div class="step-desc">StandardScaler: zero mean, unit variance</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 03</div><div class="step-name">K-Means Clustering</div><div class="step-desc">k=4 clusters, elbow-validated</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 04</div><div class="step-name">Segment Labeling</div><div class="step-desc">Profile clusters by centroid characteristics</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 05</div><div class="step-name">Affinity Matrix</div><div class="step-desc">Venue × Segment visit frequency pivot</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 06</div><div class="step-name">Recommendations</div><div class="step-desc">Top-N venues per user by affinity score</div></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-text"><h5>Features Used</h5><p>engagement_score, dwell_minutes, visit_count, unique_venues, weekend_ratio, is_returning</p></div></div>
+      <div class="feat-card"><div class="feat-icon">🎯</div><div class="feat-text"><h5>Affinity Scoring</h5><p>Visit count per segment × venue, normalised to relative match strength</p></div></div>
+      <div class="feat-card"><div class="feat-icon">⏰</div><div class="feat-text"><h5>Time Context Filter</h5><p>Cross-reference preferred hour band with venue peak hours for time-aware recommendations</p></div></div>
+    </div>
+    <div style="margin-top:16px;display:flex;align-items:center;gap:12px">
+      <button class="refresh-btn" id="refreshSegBtn" onclick="doRefreshSegments()">⟳ Refresh AI Segmentation</button>
+      <span style="font-size:11px;color:var(--text3)">Re-runs KMeans on the full dataset and updates clusters</span>
+    </div>
+  </div>
+
+  <div class="seg-cards" id="segCards"></div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot"></span>Segment Size Distribution</div></div>
+      <canvas id="segPieChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#f5a623"></span>Engagement vs Dwell by Segment</div></div>
+      <canvas id="segScatterChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card full">
+    <div class="chart-title"><div class="chart-title-left"><span class="ct-dot" style="background:#6c63ff"></span>Venue × User Segment Affinity Matrix</div></div>
+    <table class="matrix-table" id="matrixTable"></table>
+  </div>
+
+  <div class="rec-section" style="margin-top:16px">
+    <div class="rec-title">🎯 Sample Venue Recommendations by Segment</div>
+    <div class="rec-subtitle">Top 3 venue matches per user segment based on affinity scoring</div>
+    <div class="match-grid" id="matchGrid"></div>
+  </div>
+</div>
+</div>
+
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
