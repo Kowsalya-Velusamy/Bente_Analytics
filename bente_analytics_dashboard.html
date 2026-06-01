@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bente — Analytics Intelligence Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07090f;
+  --surface: #0d1018;
+  --card: #111520;
+  --card2: #141824;
+  --border: #1c2235;
+  --border2: #242b40;
+  --accent: #00f5c4;
+  --accent-dim: rgba(0,245,196,0.12);
+  --accent2: #ff4d6d;
+  --accent3: #6c63ff;
+  --accent4: #f5a623;
+  --text: #dde3f0;
+  --text2: #8b93a8;
+  --text3: #4a5168;
+  --glow: 0 0 20px rgba(0,245,196,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 80% 50% at 20% 0%, rgba(0,245,196,0.04) 0%, transparent 60%),
+  radial-gradient(ellipse 60% 40% at 80% 100%, rgba(108,99,255,0.04) 0%, transparent 60%);
+  pointer-events:none;z-index:0;}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(7,9,15,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;gap:0;height:56px;}
+.brand{display:flex;align-items:center;gap:12px;margin-right:40px;text-decoration:none;}
+.brand-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent3));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:500;font-size:13px;color:#000;letter-spacing:-0.5px;}
+.brand-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
+.brand-name em{color:var(--accent);font-style:normal;}
+.nav-tabs{display:flex;gap:2px;flex:1;}
+.nav-tab{padding:0 20px;height:56px;display:flex;align-items:center;gap:8px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-tab .tab-icon{font-size:15px;opacity:0.8;}
+.topbar-right{display:flex;align-items:center;gap:16px;margin-left:auto;}
+.live-badge{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;border:1px solid rgba(0,245,196,0.25);padding:5px 12px;border-radius:20px;}
+.live-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,245,196,0.5);}50%{opacity:0.6;box-shadow:0 0 0 5px rgba(0,245,196,0);}}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.page-inner{max-width:1440px;margin:0 auto;padding:28px 32px 48px;}
+
+/* SECTION HEADERS */
+.page-header{margin-bottom:28px;}
+.page-header h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--text);}
+.page-header p{font-size:14px;color:var(--text2);margin-top:4px;}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:6px;}
+
+/* VENUE SELECTOR */
+.venue-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.v-chip{padding:7px 16px;border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.v-chip:hover{border-color:var(--border2);color:var(--text);}
+.v-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-color,var(--accent));}
+.kpi-label{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px;}
+.kpi-value{font-size:32px;font-weight:700;line-height:1;color:var(--kpi-color,var(--accent));letter-spacing:-1px;margin-bottom:4px;}
+.kpi-sub{font-size:11px;color:var(--text3);}
+
+/* CHARTS */
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.chart-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+.chart-grid-60-40{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:16px;}
+.chart-grid-40-60{display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:16px;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+.chart-card.full{margin-bottom:16px;}
+.chart-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.chart-title .ct-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;}
+
+/* VENUE TABLE */
+.venue-table{width:100%;border-collapse:collapse;font-size:13px;}
+.venue-table th{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
+.venue-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text2);}
+.venue-table tr:hover td{background:rgba(255,255,255,0.02);}
+.venue-table td:first-child{color:var(--text);font-weight:500;}
+.v-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;}
+.bar-cell{display:flex;align-items:center;gap:8px;}
+.bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;min-width:60px;}
+.bar-fill{height:5px;border-radius:3px;background:var(--accent);}
+
+/* REVIEWS */
+.star-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.star-label{font-size:12px;color:var(--text2);width:130px;flex-shrink:0;}
+.star-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;}
+.star-bar-fill{height:6px;border-radius:3px;transition:width 0.6s ease;}
+.star-score{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);width:28px;text-align:right;}
+.review-radar-wrap{position:relative;height:260px;}
+
+/* SEGMENTATION */
+.seg-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.seg-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.seg-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--seg-color),transparent);opacity:0.04;transition:opacity 0.2s;}
+.seg-card:hover::before,.seg-card.active::before{opacity:0.1;}
+.seg-card.active{border-color:var(--seg-color);}
+.seg-icon{font-size:24px;margin-bottom:10px;}
+.seg-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.seg-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+.seg-stat-row{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap;}
+.seg-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.05);color:var(--text3);}
+.seg-highlight{font-size:28px;font-weight:700;letter-spacing:-1px;color:var(--seg-color);margin:8px 0 2px;}
+
+/* RECOMMENDATION ENGINE */
+.rec-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;}
+.rec-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.rec-subtitle{font-size:13px;color:var(--text2);margin-bottom:20px;}
+.algo-flow{display:flex;align-items:center;gap:0;overflow-x:auto;padding:8px 0;margin-bottom:20px;}
+.algo-step{background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;min-width:140px;text-align:center;flex-shrink:0;}
+.algo-step .step-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:4px;}
+.algo-step .step-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.algo-step .step-desc{font-size:10px;color:var(--text3);}
+.algo-arrow{color:var(--text3);font-size:16px;padding:0 8px;flex-shrink:0;}
+.match-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.match-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.match-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.match-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.match-info h4{font-size:13px;font-weight:600;color:var(--text);}
+.match-info p{font-size:11px;color:var(--text2);}
+.match-venues{display:flex;flex-direction:column;gap:6px;}
+.match-venue-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+.match-venue-name{color:var(--text2);}
+.match-score-bar{display:flex;align-items:center;gap:6px;}
+.msb-bg{width:60px;height:4px;background:var(--border);border-radius:2px;}
+.msb-fill{height:4px;border-radius:2px;}
+.msb-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+.feat-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;}
+.feat-icon{font-size:20px;flex-shrink:0;}
+.feat-text h5{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.feat-text p{font-size:11px;color:var(--text3);line-height:1.4;}
+
+/* MATRIX */
+.matrix-table{width:100%;border-collapse:collapse;font-size:12px;}
+.matrix-table th{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);}
+.matrix-table th:first-child{text-align:left;}
+.matrix-table td{padding:8px 12px;border-bottom:1px solid rgba(28,34,53,0.5);text-align:center;}
+.matrix-table td:first-child{text-align:left;color:var(--text2);}
+.heat-cell{display:inline-block;padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* TOOLTIP */
+canvas{max-height:220px;}
+.chart-card.tall canvas{max-height:280px;}
+
+/* OVERVIEW HERO */
+.overview-hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+.hero-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;overflow:hidden;}
+.hero-card .big-num{font-size:48px;font-weight:700;letter-spacing:-2px;line-height:1;margin-bottom:4px;}
+.hero-card .big-label{font-size:13px;color:var(--text2);}
+.hero-card::after{content:'';position:absolute;bottom:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:var(--hc,var(--accent));opacity:0.06;}
+
+/* RETURNING FREQ */
+.freq-bars{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.freq-row{display:flex;align-items:center;gap:12px;}
+.freq-name{font-size:12px;color:var(--text2);width:60px;flex-shrink:0;}
+.freq-bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;}
+.freq-bar-fill{height:8px;border-radius:4px;}
+.freq-pct{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);width:40px;text-align:right;}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}.chart-grid-3{grid-template-columns:1fr 1fr;}.seg-cards{grid-template-columns:repeat(2,1fr);}.match-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="brand" href="#">
+    <div class="brand-mark">B</div>
+    <span class="brand-name">bente<em>.</em>ai</span>
+  </a>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('overview',this)"><span class="tab-icon">◈</span> Overview</button>
+    <button class="nav-tab" onclick="showPage('venues',this)"><span class="tab-icon">◉</span> Venue Analytics</button>
+    <button class="nav-tab" onclick="showPage('visitors',this)"><span class="tab-icon">◎</span> Visitor Insights</button>
+    <button class="nav-tab" onclick="showPage('reviews',this)"><span class="tab-icon">◇</span> Venue Reviews</button>
+    <button class="nav-tab" onclick="showPage('segments',this)"><span class="tab-icon">⬡</span> AI Segmentation</button>
+  </nav>
+  <div class="topbar-right">
+    <div class="live-badge"><span class="live-dot"></span> Live · May 2026</div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ PAGE: OVERVIEW ═══════════════════════════════ -->
+<div id="page-overview" class="page active">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Platform Overview</div>
+    <h1>All Venues — Performance Summary</h1>
+    <p>Aggregated analytics across 10 venues · 1,200 check-in events · 198 unique users</p>
+  </div>
+
+  <div class="overview-hero">
+    <div class="hero-card" style="--hc:#00f5c4">
+      <div class="section-label">Total Check-ins</div>
+      <div class="big-num" style="color:var(--accent)">1,200</div>
+      <div class="big-label">Across all 10 venues</div>
+    </div>
+    <div class="hero-card" style="--hc:#6c63ff">
+      <div class="section-label">Unique Users</div>
+      <div class="big-num" style="color:#6c63ff">198</div>
+      <div class="big-label">Active platform members</div>
+    </div>
+    <div class="hero-card" style="--hc:#f5a623">
+      <div class="section-label">Avg Engagement Score</div>
+      <div class="big-num" style="color:#f5a623">53.3</div>
+      <div class="big-label">Platform-wide average</div>
+    </div>
+  </div>
+
+  <div class="chart-grid-60-40">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot"></span>Check-ins by Venue</div>
+      <canvas id="overviewBarChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#6c63ff"></span>Visit Frequency Distribution</div>
+      <canvas id="overviewFreqChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#f5a623"></span>Category Breakdown</div>
+      <canvas id="overviewCatChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#e879f9"></span>Weekend vs Weekday</div>
+      <canvas id="overviewWkChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#10b981"></span>Top Events Globally</div>
+      <canvas id="overviewEventsChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card full">
+    <div class="chart-title"><span class="ct-dot"></span>Venue Leaderboard</div>
+    <table class="venue-table" id="overviewTable"></table>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: VENUE ANALYTICS ═══════════════════════════════ -->
+<div id="page-venues" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Venue Analytics</div>
+    <h1>Deep-dive by Venue</h1>
+    <p>Select a venue to explore detailed traffic, timing, and engagement patterns</p>
+  </div>
+  <div class="venue-selector" id="venueSelector"></div>
+
+  <div class="kpi-grid" id="venueKpis"></div>
+
+  <div class="chart-grid-60-40">
+    <div class="chart-card tall">
+      <div class="chart-title"><span class="ct-dot"></span>Hourly Traffic Pattern</div>
+      <canvas id="hourChart" style="max-height:280px"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#6c63ff"></span>Day of Week Distribution</div>
+      <canvas id="dayChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#f5a623"></span>Visit Frequency</div>
+      <canvas id="venueFreqChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#e879f9"></span>Age Group Breakdown</div>
+      <canvas id="venueAgeChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#10b981"></span>Top Events at Venue</div>
+      <canvas id="venueEventsChart"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: VISITOR INSIGHTS ═══════════════════════════════ -->
+<div id="page-visitors" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Visitor Insights</div>
+    <h1>User Behavior & Returning Patterns</h1>
+    <p>New vs returning users, dwell times, and visit frequency across all venues</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#00f5c4">
+      <div class="kpi-label">Total Visitors</div>
+      <div class="kpi-value">1,200</div>
+      <div class="kpi-sub">check-in events</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#ff4d6d">
+      <div class="kpi-label">New Users</div>
+      <div class="kpi-value">554</div>
+      <div class="kpi-sub">46.2% of total</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#6c63ff">
+      <div class="kpi-label">Returning Users</div>
+      <div class="kpi-value">646</div>
+      <div class="kpi-sub">53.8% of total</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#f5a623">
+      <div class="kpi-label">Avg Dwell Time</div>
+      <div class="kpi-value">85<span style="font-size:18px">m</span></div>
+      <div class="kpi-sub">platform average</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#10b981">
+      <div class="kpi-label">High Freq Visitors</div>
+      <div class="kpi-value">25.1%</div>
+      <div class="kpi-sub">visit often</div>
+    </div>
+  </div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot"></span>New vs Returning by Venue</div>
+      <canvas id="newReturnChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#6c63ff"></span>Average Dwell Time by Venue (min)</div>
+      <canvas id="dwellChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#f5a623"></span>Return Frequency — All Venues</div>
+      <div class="freq-bars" id="freqBarsAll"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#e879f9"></span>Returning Frequency per Venue</div>
+      <canvas id="venueFreqStackChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#10b981"></span>User Status by Age Group</div>
+      <canvas id="ageStatusChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card full">
+    <div class="chart-title"><span class="ct-dot"></span>Visitor Metrics by Venue</div>
+    <table class="venue-table" id="visitorTable"></table>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: VENUE REVIEWS ═══════════════════════════════ -->
+<div id="page-reviews" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">Venue Reviews</div>
+    <h1>Quality Metrics & Experience Scores</h1>
+    <p>Derived from engagement, popularity, crowd density, and dwell behavior data</p>
+  </div>
+  <div class="venue-selector" id="reviewVenueSelector"></div>
+
+  <div class="kpi-grid" id="reviewKpis"></div>
+
+  <div class="chart-grid-60-40">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot"></span>Review Criteria Scores (out of 5)</div>
+      <div id="reviewBars"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#6c63ff"></span>Criteria Radar</div>
+      <div class="review-radar-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#f5a623"></span>All Venues — Avg Review Score</div>
+      <canvas id="allReviewChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#e879f9"></span>Cleanliness vs Atmosphere vs WiFi</div>
+      <canvas id="reviewCompareChart"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE: AI SEGMENTATION ═══════════════════════════════ -->
+<div id="page-segments" class="page">
+<div class="page-inner">
+  <div class="page-header">
+    <div class="section-label">AI / ML Intelligence</div>
+    <h1>User Segmentation & Recommendation Engine</h1>
+    <p>Behavioral segmentation using KMeans-style clustering · Venue-User affinity matching</p>
+  </div>
+
+  <!-- Algorithm Flow -->
+  <div class="rec-section">
+    <div class="rec-title">🤖 Recommendation Engine Pipeline</div>
+    <div class="rec-subtitle">How users are segmented and matched to optimal venues</div>
+    <div class="algo-flow">
+      <div class="algo-step"><div class="step-num">STEP 01</div><div class="step-name">Feature Extraction</div><div class="step-desc">Engagement, dwell, frequency, venues visited</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 02</div><div class="step-name">Normalization</div><div class="step-desc">StandardScaler: zero mean, unit variance</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 03</div><div class="step-name">K-Means Clustering</div><div class="step-desc">k=4 clusters, elbow-validated</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 04</div><div class="step-name">Segment Labeling</div><div class="step-desc">Profile clusters by centroid characteristics</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 05</div><div class="step-name">Affinity Matrix</div><div class="step-desc">Venue × Segment visit frequency pivot</div></div>
+      <div class="algo-arrow">→</div>
+      <div class="algo-step"><div class="step-num">STEP 06</div><div class="step-name">Recommendations</div><div class="step-desc">Top-N venues per user by affinity score</div></div>
+    </div>
+    <div class="feature-grid">
+      <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-text"><h5>Features Used</h5><p>engagement_score, dwell_minutes, visit_frequency, unique_venues, user_status, age_group</p></div></div>
+      <div class="feat-card"><div class="feat-icon">🎯</div><div class="feat-text"><h5>Affinity Scoring</h5><p>Normalized visit count per segment × 1.5 weight for high engagement users</p></div></div>
+      <div class="feat-card"><div class="feat-icon">⏰</div><div class="feat-text"><h5>Time Context Filter</h5><p>Cross-reference preferred hour band with venue peak hours for time-aware recommendations</p></div></div>
+    </div>
+  </div>
+
+  <!-- Segment Cards -->
+  <div class="seg-cards" id="segCards"></div>
+
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot"></span>Segment Size Distribution</div>
+      <canvas id="segPieChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span class="ct-dot" style="background:#f5a623"></span>Engagement vs Dwell by Segment</div>
+      <canvas id="segScatterChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Venue-Segment Match Matrix -->
+  <div class="chart-card full">
+    <div class="chart-title"><span class="ct-dot" style="background:#6c63ff"></span>Venue × User Segment Affinity Matrix</div>
+    <table class="matrix-table" id="matrixTable"></table>
+  </div>
+
+  <!-- Sample Recommendations -->
+  <div class="rec-section" style="margin-top:16px">
+    <div class="rec-title">🎯 Sample Venue Recommendations by Segment</div>
+    <div class="rec-subtitle">Top 3 venue matches per user segment based on affinity scoring</div>
+    <div class="match-grid" id="matchGrid"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════ DATA ═══════════
+const DATA = {"venues":{"VEN001":{"name":"Metro Nightclub","category":"Nightclub","color":"#ff4d6d","checkins":104,"unique_users":83,"new_users":49,"returning_users":55,"avg_dwell":126.5,"avg_crowd":60.5,"avg_engagement":66.1,"avg_popularity":63.7,"freq_high":24.0,"freq_medium":56.7,"freq_low":19.2,"hour_dist":[1,0,2,0,0,0,0,0,0,2,0,1,3,1,0,1,2,0,2,1,2,20,20,46],"day_dist":[11,15,11,13,25,18,11],"top_events":[["Live Music",37],["Weekend Party",36],["Happy Hour",31]],"age_dist":{"18-24":18,"25-34":20,"35-44":31,"45+":35},"weekend":29,"weekday":75,"reviews":{"atmosphere":3.6,"cleanliness":4.1,"wifi":3.5,"service":3.5,"value_for_money":3.4,"noise_level":3.0}},"VEN002":{"name":"Harborview Bar","category":"Bar/Lounge","color":"#f5a623","checkins":134,"unique_users":102,"new_users":58,"returning_users":76,"avg_dwell":91.5,"avg_crowd":60.4,"avg_engagement":54.4,"avg_popularity":70.4,"freq_high":29.1,"freq_medium":61.9,"freq_low":9.0,"hour_dist":[2,0,1,0,2,1,1,1,0,1,0,2,0,1,2,4,2,8,8,14,10,27,27,20],"day_dist":[26,21,22,26,13,11,15],"top_events":[["Happy Hour",54],["Networking Event",41],["Live Music",39]],"age_dist":{"18-24":29,"25-34":36,"35-44":31,"45+":38},"weekend":26,"weekday":108,"reviews":{"atmosphere":3.2,"cleanliness":4.1,"wifi":3.5,"service":3.8,"value_for_money":3.2,"noise_level":3.0}},"VEN003":{"name":"Central Coffee House","category":"Cafe","color":"#00f5c4","checkins":117,"unique_users":87,"new_users":56,"returning_users":61,"avg_dwell":40.4,"avg_crowd":51.4,"avg_engagement":42.5,"avg_popularity":61.8,"freq_high":25.6,"freq_medium":61.5,"freq_low":12.8,"hour_dist":[0,0,0,0,3,0,4,21,11,12,11,7,3,9,10,4,6,6,3,1,3,2,1,0],"day_dist":[20,14,10,17,22,12,22],"top_events":[["Business Meetup",44],["Lunch Rush",38],["Morning Workout",35]],"age_dist":{"18-24":26,"25-34":30,"35-44":33,"45+":28},"weekend":34,"weekday":83,"reviews":{"atmosphere":2.7,"cleanliness":4.2,"wifi":4.5,"service":3.5,"value_for_money":3.0,"noise_level":2.6}},"VEN004":{"name":"Seaside Restaurant","category":"Restaurant","color":"#6c63ff","checkins":121,"unique_users":87,"new_users":52,"returning_users":69,"avg_dwell":74.4,"avg_crowd":64.2,"avg_engagement":52.4,"avg_popularity":67.9,"freq_high":24.8,"freq_medium":62.8,"freq_low":12.4,"hour_dist":[0,1,0,1,0,0,0,1,0,0,4,3,15,11,5,3,0,14,11,22,14,5,7,4],"day_dist":[17,13,19,18,25,13,16],"top_events":[["Lunch Rush",45],["Happy Hour",40],["Dinner Special",36]],"age_dist":{"18-24":31,"25-34":25,"35-44":28,"45+":37},"weekend":29,"weekday":92,"reviews":{"atmosphere":3.1,"cleanliness":4.0,"wifi":3.5,"service":3.7,"value_for_money":3.2,"noise_level":3.2}},"VEN005":{"name":"Greenfield Gym","category":"Gym","color":"#10b981","checkins":101,"unique_users":78,"new_users":51,"returning_users":50,"avg_dwell":63.9,"avg_crowd":45.6,"avg_engagement":45.4,"avg_popularity":56.5,"freq_high":24.8,"freq_medium":59.4,"freq_low":15.8,"hour_dist":[0,0,0,0,0,2,11,11,9,3,3,4,4,6,2,4,8,6,11,6,10,0,1,0],"day_dist":[16,12,17,14,18,12,12],"top_events":[["Morning Workout",45],["Business Meetup",30],["Networking Event",26]],"age_dist":{"18-24":24,"25-34":22,"35-44":29,"45+":26},"weekend":24,"weekday":77,"reviews":{"atmosphere":2.8,"cleanliness":4.3,"wifi":3.5,"service":3.3,"value_for_money":3.1,"noise_level":2.3}},"VEN006":{"name":"Grand Theater","category":"Entertainment","color":"#e879f9","checkins":121,"unique_users":97,"new_users":58,"returning_users":63,"avg_dwell":98.7,"avg_crowd":59.5,"avg_engagement":56.9,"avg_popularity":66.7,"freq_high":23.1,"freq_medium":60.3,"freq_low":16.5,"hour_dist":[0,0,2,1,0,0,0,1,1,0,0,1,6,3,7,16,10,12,5,13,15,13,5,10],"day_dist":[15,16,19,20,17,19,15],"top_events":[["Weekend Party",48],["Live Music",38],["Concert",35]],"age_dist":{"18-24":22,"25-34":33,"35-44":26,"45+":40},"weekend":34,"weekday":87,"reviews":{"atmosphere":3.3,"cleanliness":4.1,"wifi":3.5,"service":3.7,"value_for_money":3.3,"noise_level":3.0}},"VEN007":{"name":"Downtown Food Court","category":"Food Court","color":"#fb923c","checkins":120,"unique_users":94,"new_users":56,"returning_users":64,"avg_dwell":33.9,"avg_crowd":59.4,"avg_engagement":43.3,"avg_popularity":65.8,"freq_high":21.7,"freq_medium":62.5,"freq_low":15.8,"hour_dist":[1,1,2,2,1,1,0,1,0,5,5,13,16,17,7,4,7,6,15,5,8,1,1,1],"day_dist":[23,15,23,10,18,17,14],"top_events":[["Retail Promotion",48],["Dinner Special",38],["Lunch Rush",34]],"age_dist":{"18-24":25,"25-34":31,"35-44":25,"45+":39},"weekend":31,"weekday":89,"reviews":{"atmosphere":2.7,"cleanliness":4.1,"wifi":3.5,"service":3.6,"value_for_money":3.1,"noise_level":3.0}},"VEN008":{"name":"City Mall","category":"Mall","color":"#38bdf8","checkins":128,"unique_users":90,"new_users":59,"returning_users":69,"avg_dwell":91.9,"avg_crowd":60.9,"avg_engagement":55.5,"avg_popularity":68.7,"freq_high":23.4,"freq_medium":63.3,"freq_low":13.3,"hour_dist":[2,0,0,0,1,0,0,0,0,0,8,6,13,19,12,11,22,17,8,6,3,0,0,0],"day_dist":[23,17,15,17,25,13,18],"top_events":[["Lunch Rush",45],["Retail Promotion",42],["Weekend Party",41]],"age_dist":{"18-24":30,"25-34":23,"35-44":27,"45+":48},"weekend":31,"weekday":97,"reviews":{"atmosphere":3.2,"cleanliness":4.1,"wifi":3.5,"service":3.7,"value_for_money":3.3,"noise_level":3.0}},"VEN009":{"name":"TechHub Coworking","category":"Coworking","color":"#a3e635","checkins":137,"unique_users":100,"new_users":63,"returning_users":74,"avg_dwell":172.2,"avg_crowd":46.6,"avg_engagement":72.5,"avg_popularity":65.6,"freq_high":24.8,"freq_medium":56.9,"freq_low":18.2,"hour_dist":[1,2,3,2,4,1,1,2,7,13,10,14,15,7,11,15,12,10,4,1,0,1,1,0],"day_dist":[16,24,22,19,20,22,14],"top_events":[["Business Meetup",56],["Live Music",41],["Networking Event",40]],"age_dist":{"18-24":24,"25-34":31,"35-44":40,"45+":42},"weekend":36,"weekday":101,"reviews":{"atmosphere":3.9,"cleanliness":4.3,"wifi":4.5,"service":3.6,"value_for_money":3.5,"noise_level":2.3}},"VEN010":{"name":"Riverwalk Park","category":"Park","color":"#fbbf24","checkins":117,"unique_users":88,"new_users":52,"returning_users":65,"avg_dwell":54.1,"avg_crowd":50.4,"avg_engagement":44.2,"avg_popularity":61.5,"freq_high":29.1,"freq_medium":55.6,"freq_low":15.4,"hour_dist":[1,0,0,0,1,0,1,9,2,13,8,6,4,12,10,17,8,8,7,2,4,2,1,1],"day_dist":[13,14,21,16,20,18,15],"top_events":[["Weekend Party",41],["Concert",39],["Morning Workout",37]],"age_dist":{"18-24":25,"25-34":23,"35-44":34,"45+":35},"weekend":33,"weekday":84,"reviews":{"atmosphere":2.8,"cleanliness":4.2,"wifi":3.5,"service":3.5,"value_for_money":3.1,"noise_level":2.5}}},"segments":{"Power Users":{"count":3,"avg_eng":66.9,"avg_dwell":112.0,"avg_venues":4.0,"age":{"45+":2,"18-24":1},"top_prefs":{"Nightlife":1,"Coffee":1,"Food":1}},"Event Seekers":{"count":28,"avg_eng":54.6,"avg_dwell":88.7,"avg_venues":3.4,"age":{"45+":8,"25-34":7,"18-24":7,"35-44":6},"top_prefs":{"Nightlife":14,"Music":14}},"Casual Visitors":{"count":65,"avg_eng":53.8,"avg_dwell":86.3,"avg_venues":3.2,"age":{"35-44":17,"45+":19,"18-24":12,"25-34":17},"top_prefs":{"Food":15,"Social":13,"Shopping":12,"Coffee":10}},"Venue Explorers":{"count":102,"avg_eng":53.2,"avg_dwell":85.3,"avg_venues":5.8,"age":{"45+":31,"18-24":24,"25-34":21,"35-44":26},"top_prefs":{"Business":16,"Fitness":16,"Food":15,"Music":12}}},"matrix":{"VEN001":{"Casual Visitors":27,"Venue Explorers":63,"Event Seekers":13,"Power Users":1},"VEN002":{"Venue Explorers":91,"Event Seekers":12,"Power Users":3,"Casual Visitors":28},"VEN003":{"Venue Explorers":76,"Casual Visitors":28,"Event Seekers":12,"Power Users":1},"VEN004":{"Casual Visitors":33,"Venue Explorers":79,"Event Seekers":9},"VEN005":{"Casual Visitors":20,"Venue Explorers":66,"Event Seekers":14,"Power Users":1},"VEN006":{"Venue Explorers":73,"Event Seekers":23,"Casual Visitors":24,"Power Users":1},"VEN007":{"Venue Explorers":78,"Casual Visitors":28,"Event Seekers":12,"Power Users":2},"VEN008":{"Casual Visitors":30,"Venue Explorers":82,"Event Seekers":14,"Power Users":2},"VEN009":{"Venue Explorers":88,"Casual Visitors":34,"Event Seekers":11,"Power Users":4},"VEN010":{"Venue Explorers":80,"Event Seekers":7,"Casual Visitors":29,"Power Users":1}}};
+
+const CHART_DEFAULTS = {
+  responsive:true, maintainAspectRatio:true,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{ticks:{color:'#4a5168',font:{family:'DM Mono',size:9}},grid:{color:'rgba(28,34,53,0.6)'},border:{color:'rgba(28,34,53,0.4)'}},
+    y:{ticks:{color:'#4a5168',font:{family:'DM Mono',size:9}},grid:{color:'rgba(28,34,53,0.6)'},border:{color:'rgba(28,34,53,0.4)'}}
+  }
+};
+
+const VENUE_IDS = Object.keys(DATA.venues);
+const VNAMES = VENUE_IDS.map(id=>DATA.venues[id].name.replace(' ','<br>'));
+const VNAMES_SHORT = VENUE_IDS.map(id=>DATA.venues[id].name.split(' ').slice(0,2).join(' '));
+const VCOLORS = VENUE_IDS.map(id=>DATA.venues[id].color);
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const SEG_COLORS = {'Power Users':'#ff4d6d','Event Seekers':'#f5a623','Casual Visitors':'#00f5c4','Venue Explorers':'#6c63ff'};
+const SEG_ICONS = {'Power Users':'⚡','Event Seekers':'🎭','Casual Visitors':'☕','Venue Explorers':'🧭'};
+
+// ═══ PAGE SWITCHING ═══
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='venues') initVenuePage();
+  if(id==='reviews') initReviewPage();
+}
+
+// ═══ OVERVIEW PAGE ═══
+const overviewCtx = id => document.getElementById(id).getContext('2d');
+
+new Chart(overviewCtx('overviewBarChart'),{
+  type:'bar',
+  data:{
+    labels:VNAMES_SHORT,
+    datasets:[{data:VENUE_IDS.map(id=>DATA.venues[id].checkins),backgroundColor:VCOLORS.map(c=>c+'bb'),borderColor:VCOLORS,borderWidth:1,borderRadius:5}]
+  },
+  options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}
+});
+
+new Chart(overviewCtx('overviewFreqChart'),{
+  type:'doughnut',
+  data:{
+    labels:['High Frequency','Medium Frequency','Low Frequency'],
+    datasets:[{data:[301,722,177],backgroundColor:['rgba(0,245,196,0.8)','rgba(108,99,255,0.8)','rgba(245,166,35,0.7)'],borderWidth:0}]
+  },
+  options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:12,boxWidth:10}}},cutout:'62%'}
+});
+
+new Chart(overviewCtx('overviewCatChart'),{
+  type:'doughnut',
+  data:{
+    labels:VENUE_IDS.map(id=>DATA.venues[id].category),
+    datasets:[{data:VENUE_IDS.map(id=>DATA.venues[id].checkins),backgroundColor:VCOLORS.map(c=>c+'cc'),borderWidth:0}]
+  },
+  options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:8,boxWidth:8}}},cutout:'55%'}
+});
+
+new Chart(overviewCtx('overviewWkChart'),{
+  type:'bar',
+  data:{
+    labels:VNAMES_SHORT,
+    datasets:[
+      {label:'Weekday',data:VENUE_IDS.map(id=>DATA.venues[id].weekday),backgroundColor:'rgba(108,99,255,0.7)',borderRadius:3,stack:'s'},
+      {label:'Weekend',data:VENUE_IDS.map(id=>DATA.venues[id].weekend),backgroundColor:'rgba(245,166,35,0.7)',borderRadius:3,stack:'s'}
+    ]
+  },
+  options:{...CHART_DEFAULTS,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:10,boxWidth:8}}},scales:{...CHART_DEFAULTS.scales}}
+});
+
+const allEvents = {};
+VENUE_IDS.forEach(id=>{DATA.venues[id].top_events.forEach(([e,c])=>{allEvents[e]=(allEvents[e]||0)+c;});});
+const topEvt = Object.entries(allEvents).sort((a,b)=>b[1]-a[1]).slice(0,6);
+new Chart(overviewCtx('overviewEventsChart'),{
+  type:'bar',
+  data:{
+    labels:topEvt.map(e=>e[0]),
+    datasets:[{data:topEvt.map(e=>e[1]),backgroundColor:['#00f5c4bb','#ff4d6dbb','#6c63ffbb','#f5a623bb','#10b981bb','#38bdf8bb'],borderRadius:4}]
+  },
+  options:{...CHART_DEFAULTS,indexAxis:'y',plugins:{legend:{display:false}}}
+});
+
+// Overview table
+const oTable = document.getElementById('overviewTable');
+oTable.innerHTML=`<thead><tr><th>#</th><th>Venue</th><th>Category</th><th>Check-ins</th><th>Unique Users</th><th>Avg Engagement</th><th>Avg Popularity</th><th>Avg Dwell</th></tr></thead><tbody></tbody>`;
+const oTbody = oTable.querySelector('tbody');
+const sorted = [...VENUE_IDS].sort((a,b)=>DATA.venues[b].checkins-DATA.venues[a].checkins);
+sorted.forEach((id,i)=>{
+  const v=DATA.venues[id];
+  oTbody.innerHTML+=`<tr>
+    <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:11px">${String(i+1).padStart(2,'0')}</td>
+    <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${v.color};margin-right:8px"></span>${v.name}</td>
+    <td><span class="v-badge" style="background:${v.color}22;color:${v.color}">${v.category}</span></td>
+    <td><div class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${(v.checkins/137*100).toFixed(0)}%;background:${v.color}"></div></div>${v.checkins}</div></td>
+    <td>${v.unique_users}</td>
+    <td style="font-family:'DM Mono',monospace;color:${v.color}">${v.avg_engagement}</td>
+    <td style="font-family:'DM Mono',monospace">${v.avg_popularity}</td>
+    <td style="font-family:'DM Mono',monospace">${v.avg_dwell}m</td>
+  </tr>`;
+});
+
+// ═══ VENUE PAGE ═══
+let currentVenueId = 'VEN009';
+let venueCharts = {};
+
+function initVenuePage(){
+  const sel = document.getElementById('venueSelector');
+  if(sel.innerHTML!=='') return;
+  VENUE_IDS.forEach(id=>{
+    const btn = document.createElement('button');
+    btn.className = 'v-chip'+(id===currentVenueId?' active':'');
+    btn.textContent = DATA.venues[id].name;
+    btn.onclick=()=>selectVenue(id);
+    sel.appendChild(btn);
+  });
+  renderVenueCharts(currentVenueId);
+}
+
+function selectVenue(id){
+  currentVenueId=id;
+  document.querySelectorAll('#venueSelector .v-chip').forEach((b,i)=>{
+    b.classList.toggle('active', VENUE_IDS[i]===id);
+  });
+  renderVenueCharts(id);
+}
+
+function renderVenueCharts(id){
+  const v = DATA.venues[id];
+  // KPIs
+  const kpis = document.getElementById('venueKpis');
+  kpis.innerHTML=`
+    <div class="kpi-card" style="--kpi-color:${v.color}"><div class="kpi-label">Total Check-ins</div><div class="kpi-value">${v.checkins}</div><div class="kpi-sub">all time</div></div>
+    <div class="kpi-card" style="--kpi-color:#6c63ff"><div class="kpi-label">Unique Visitors</div><div class="kpi-value">${v.unique_users}</div><div class="kpi-sub">distinct users</div></div>
+    <div class="kpi-card" style="--kpi-color:#ff4d6d"><div class="kpi-label">New Users</div><div class="kpi-value">${v.new_users}</div><div class="kpi-sub">${(v.new_users/v.checkins*100).toFixed(0)}% of visits</div></div>
+    <div class="kpi-card" style="--kpi-color:#f5a623"><div class="kpi-label">Returning Users</div><div class="kpi-value">${v.returning_users}</div><div class="kpi-sub">${(v.returning_users/v.checkins*100).toFixed(0)}% of visits</div></div>
+    <div class="kpi-card" style="--kpi-color:#10b981"><div class="kpi-label">Avg Dwell</div><div class="kpi-value">${v.avg_dwell}<span style="font-size:16px">m</span></div><div class="kpi-sub">per visit</div></div>
+  `;
+  // Destroy old charts
+  Object.values(venueCharts).forEach(c=>c.destroy());
+  venueCharts={};
+
+  const mkChart=(id,type,data,options)=>{
+    const c=document.getElementById(id);
+    venueCharts[id]=new Chart(c.getContext('2d'),{type,data,options});
+  };
+
+  mkChart('hourChart','bar',{
+    labels:Array.from({length:24},(_,i)=>i<10?'0'+i+':00':i+':00'),
+    datasets:[{data:v.hour_dist,backgroundColor:v.color+'66',borderColor:v.color,borderWidth:1,borderRadius:3}]
+  },{...CHART_DEFAULTS,plugins:{legend:{display:false}}});
+
+  mkChart('dayChart','bar',{
+    labels:DAYS,
+    datasets:[{data:v.day_dist,backgroundColor:DAYS.map((_,i)=>i>=4?v.color+'cc':v.color+'55'),borderColor:v.color,borderWidth:1,borderRadius:4}]
+  },{...CHART_DEFAULTS,plugins:{legend:{display:false}}});
+
+  mkChart('venueFreqChart','doughnut',{
+    labels:['High','Medium','Low'],
+    datasets:[{data:[v.freq_high,v.freq_medium,v.freq_low],backgroundColor:['rgba(0,245,196,0.8)','rgba(108,99,255,0.7)','rgba(245,166,35,0.6)'],borderWidth:0}]
+  },{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:10,boxWidth:8}}},cutout:'60%'});
+
+  mkChart('venueAgeChart','doughnut',{
+    labels:Object.keys(v.age_dist),
+    datasets:[{data:Object.values(v.age_dist),backgroundColor:['rgba(255,77,109,0.8)','rgba(108,99,255,0.8)','rgba(0,245,196,0.8)','rgba(245,166,35,0.8)'],borderWidth:0}]
+  },{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:10,boxWidth:8}}},cutout:'60%'});
+
+  mkChart('venueEventsChart','bar',{
+    labels:v.top_events.map(e=>e[0]),
+    datasets:[{data:v.top_events.map(e=>e[1]),backgroundColor:[v.color+'cc','rgba(108,99,255,0.7)','rgba(245,166,35,0.7)','rgba(255,77,109,0.7)','rgba(16,185,129,0.7)'],borderRadius:4}]
+  },{...CHART_DEFAULTS,indexAxis:'y',plugins:{legend:{display:false}}});
+}
+
+// ═══ VISITOR PAGE ═══
+new Chart(document.getElementById('newReturnChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:VNAMES_SHORT,
+    datasets:[
+      {label:'New',data:VENUE_IDS.map(id=>DATA.venues[id].new_users),backgroundColor:'rgba(255,77,109,0.7)',borderRadius:3,stack:'s'},
+      {label:'Returning',data:VENUE_IDS.map(id=>DATA.venues[id].returning_users),backgroundColor:'rgba(0,245,196,0.7)',borderRadius:3,stack:'s'}
+    ]
+  },
+  options:{...CHART_DEFAULTS,plugins:{legend:{display:true,position:'top',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:12,boxWidth:8}}},scales:{...CHART_DEFAULTS.scales}}
+});
+
+new Chart(document.getElementById('dwellChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:VNAMES_SHORT,
+    datasets:[{data:VENUE_IDS.map(id=>DATA.venues[id].avg_dwell),backgroundColor:VCOLORS.map(c=>c+'99'),borderColor:VCOLORS,borderWidth:1,borderRadius:4}]
+  },
+  options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}
+});
+
+// Freq bars
+const freqBarsEl = document.getElementById('freqBarsAll');
+const totalCheckins=1200;
+const freqData=[{name:'High',val:301,color:'#00f5c4'},{name:'Medium',val:722,color:'#6c63ff'},{name:'Low',val:177,color:'#f5a623'}];
+freqData.forEach(f=>{
+  freqBarsEl.innerHTML+=`<div class="freq-row">
+    <div class="freq-name">${f.name}</div>
+    <div class="freq-bar-bg"><div class="freq-bar-fill" style="width:${(f.val/totalCheckins*100).toFixed(0)}%;background:${f.color}"></div></div>
+    <div class="freq-pct">${(f.val/totalCheckins*100).toFixed(1)}%</div>
+  </div>`;
+});
+
+new Chart(document.getElementById('venueFreqStackChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:VNAMES_SHORT,
+    datasets:[
+      {label:'High',data:VENUE_IDS.map(id=>DATA.venues[id].freq_high),backgroundColor:'rgba(0,245,196,0.75)',stack:'f',borderRadius:2},
+      {label:'Med',data:VENUE_IDS.map(id=>DATA.venues[id].freq_medium),backgroundColor:'rgba(108,99,255,0.7)',stack:'f',borderRadius:2},
+      {label:'Low',data:VENUE_IDS.map(id=>DATA.venues[id].freq_low),backgroundColor:'rgba(245,166,35,0.65)',stack:'f',borderRadius:2}
+    ]
+  },
+  options:{...CHART_DEFAULTS,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:8,boxWidth:8}}},scales:{...CHART_DEFAULTS.scales,x:{...CHART_DEFAULTS.scales.x,stacked:true},y:{...CHART_DEFAULTS.scales.y,stacked:true}}}
+});
+
+const ageGroups=['18-24','25-34','35-44','45+'];
+const ageNewData=ageGroups.map(ag=>{
+  let tot=0;VENUE_IDS.forEach(id=>{tot+=DATA.venues[id].age_dist[ag]||0;});return tot;
+});
+new Chart(document.getElementById('ageStatusChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:ageGroups,
+    datasets:[{data:ageNewData,backgroundColor:['rgba(255,77,109,0.8)','rgba(108,99,255,0.8)','rgba(0,245,196,0.8)','rgba(245,166,35,0.8)'],borderRadius:5}]
+  },
+  options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}
+});
+
+// Visitor table
+const vTable = document.getElementById('visitorTable');
+vTable.innerHTML=`<thead><tr><th>Venue</th><th>Total Visits</th><th>New Users</th><th>Returning</th><th>Return Rate</th><th>High Freq %</th><th>Avg Dwell</th><th>Weekend %</th></tr></thead><tbody></tbody>`;
+const vTbody=vTable.querySelector('tbody');
+VENUE_IDS.forEach(id=>{
+  const v=DATA.venues[id];
+  const retRate=(v.returning_users/v.checkins*100).toFixed(0);
+  const wkPct=((v.weekend/(v.weekend+v.weekday))*100).toFixed(0);
+  vTbody.innerHTML+=`<tr>
+    <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${v.color};margin-right:8px"></span>${v.name}</td>
+    <td style="font-family:'DM Mono',monospace">${v.checkins}</td>
+    <td style="color:#ff4d6d;font-family:'DM Mono',monospace">${v.new_users}</td>
+    <td style="color:#00f5c4;font-family:'DM Mono',monospace">${v.returning_users}</td>
+    <td><span class="v-badge" style="background:rgba(0,245,196,0.12);color:#00f5c4">${retRate}%</span></td>
+    <td style="font-family:'DM Mono',monospace">${v.freq_high}%</td>
+    <td style="font-family:'DM Mono',monospace;color:${v.color}">${v.avg_dwell}m</td>
+    <td style="font-family:'DM Mono',monospace">${wkPct}%</td>
+  </tr>`;
+});
+
+// ═══ REVIEW PAGE ═══
+let currentReviewVenue='VEN009';
+let reviewCharts={};
+
+function initReviewPage(){
+  const sel=document.getElementById('reviewVenueSelector');
+  if(sel.innerHTML!=='') return;
+  VENUE_IDS.forEach(id=>{
+    const btn=document.createElement('button');
+    btn.className='v-chip'+(id===currentReviewVenue?' active':'');
+    btn.textContent=DATA.venues[id].name;
+    btn.onclick=()=>selectReviewVenue(id);
+    sel.appendChild(btn);
+  });
+  renderReview(currentReviewVenue);
+  renderAllReviewCharts();
+}
+
+function selectReviewVenue(id){
+  currentReviewVenue=id;
+  document.querySelectorAll('#reviewVenueSelector .v-chip').forEach((b,i)=>{
+    b.classList.toggle('active',VENUE_IDS[i]===id);
+  });
+  renderReview(id);
+}
+
+const REVIEW_LABELS={atmosphere:'🌟 Atmosphere',cleanliness:'🧹 Cleanliness',wifi:'📶 WiFi / Connectivity',service:'💼 Service Quality',value_for_money:'💰 Value for Money',noise_level:'🔊 Noise Level'};
+const REVIEW_COLORS={atmosphere:'#f5a623',cleanliness:'#10b981',wifi:'#38bdf8',service:'#6c63ff',value_for_money:'#00f5c4',noise_level:'#ff4d6d'};
+
+function renderReview(id){
+  const v=DATA.venues[id];
+  const r=v.reviews;
+  const avgScore=(Object.values(r).reduce((a,b)=>a+b,0)/Object.keys(r).length).toFixed(1);
+  const bestCrit=Object.entries(r).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('reviewKpis').innerHTML=`
+    <div class="kpi-card" style="--kpi-color:${v.color}"><div class="kpi-label">Venue</div><div class="kpi-value" style="font-size:18px;padding-top:4px">${v.name}</div><div class="kpi-sub">${v.category}</div></div>
+    <div class="kpi-card" style="--kpi-color:#f5a623"><div class="kpi-label">Avg Score</div><div class="kpi-value">${avgScore}<span style="font-size:18px">/5</span></div><div class="kpi-sub">across all criteria</div></div>
+    <div class="kpi-card" style="--kpi-color:#10b981"><div class="kpi-label">Engagement</div><div class="kpi-value">${v.avg_engagement}</div><div class="kpi-sub">avg score</div></div>
+    <div class="kpi-card" style="--kpi-color:#6c63ff"><div class="kpi-label">Popularity</div><div class="kpi-value">${v.avg_popularity}</div><div class="kpi-sub">venue score</div></div>
+    <div class="kpi-card" style="--kpi-color:#00f5c4"><div class="kpi-label">Best Criteria</div><div class="kpi-value" style="font-size:20px">${REVIEW_LABELS[bestCrit[0]].split(' ')[0]} ${bestCrit[1]}</div><div class="kpi-sub">${bestCrit[0].replace(/_/g,' ')}</div></div>
+  `;
+
+  const bars=document.getElementById('reviewBars');
+  bars.innerHTML='';
+  Object.entries(r).forEach(([k,score])=>{
+    bars.innerHTML+=`<div class="star-row">
+      <div class="star-label">${REVIEW_LABELS[k]}</div>
+      <div class="star-bar-bg"><div class="star-bar-fill" style="width:${(score/5*100).toFixed(0)}%;background:${REVIEW_COLORS[k]}"></div></div>
+      <div class="star-score">${score}</div>
+    </div>`;
+  });
+
+  if(reviewCharts.radar) reviewCharts.radar.destroy();
+  reviewCharts.radar=new Chart(document.getElementById('radarChart').getContext('2d'),{
+    type:'radar',
+    data:{
+      labels:Object.values(REVIEW_LABELS).map(l=>l.split(' ').slice(1).join(' ')),
+      datasets:[{data:Object.values(r),backgroundColor:v.color+'33',borderColor:v.color,borderWidth:2,pointBackgroundColor:v.color,pointRadius:4}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{r:{ticks:{color:'#4a5168',font:{family:'DM Mono',size:8},backdropColor:'transparent'},grid:{color:'rgba(28,34,53,0.8)'},pointLabels:{color:'#8b93a8',font:{family:'DM Sans',size:11}},min:0,max:5,beginAtZero:true,angleLines:{color:'rgba(28,34,53,0.6)'}}}
+    }
+  });
+}
+
+function renderAllReviewCharts(){
+  const criteria=['atmosphere','cleanliness','wifi','service','value_for_money','noise_level'];
+  const avgScores=VENUE_IDS.map(id=>{
+    const r=DATA.venues[id].reviews;
+    return (Object.values(r).reduce((a,b)=>a+b,0)/Object.keys(r).length).toFixed(2);
+  });
+  new Chart(document.getElementById('allReviewChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:VNAMES_SHORT,
+      datasets:[{data:avgScores,backgroundColor:VCOLORS.map(c=>c+'aa'),borderColor:VCOLORS,borderWidth:1,borderRadius:4}]
+    },
+    options:{...CHART_DEFAULTS,scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,min:3,max:5}},plugins:{legend:{display:false}}}
+  });
+
+  new Chart(document.getElementById('reviewCompareChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:VNAMES_SHORT,
+      datasets:[
+        {label:'Cleanliness',data:VENUE_IDS.map(id=>DATA.venues[id].reviews.cleanliness),backgroundColor:'rgba(16,185,129,0.75)',borderRadius:2,stack:'r'},
+        {label:'Atmosphere',data:VENUE_IDS.map(id=>DATA.venues[id].reviews.atmosphere),backgroundColor:'rgba(245,166,35,0.7)',borderRadius:2,stack:'r'},
+        {label:'WiFi',data:VENUE_IDS.map(id=>DATA.venues[id].reviews.wifi),backgroundColor:'rgba(56,189,248,0.7)',borderRadius:2,stack:'r'}
+      ]
+    },
+    options:{...CHART_DEFAULTS,plugins:{legend:{display:true,position:'top',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:10,boxWidth:8}}},scales:{...CHART_DEFAULTS.scales}}
+  });
+}
+
+// ═══ SEGMENTATION PAGE ═══
+const segNames=Object.keys(DATA.segments);
+
+// Seg cards
+const segCardsEl=document.getElementById('segCards');
+segNames.forEach((seg,i)=>{
+  const s=DATA.segments[seg];
+  const col=SEG_COLORS[seg];
+  const topPref=Object.keys(s.top_prefs)[0]||'Mixed';
+  segCardsEl.innerHTML+=`<div class="seg-card" style="--seg-color:${col}" onclick="highlightSeg(${i})">
+    <div class="seg-icon">${SEG_ICONS[seg]}</div>
+    <div class="seg-name">${seg}</div>
+    <div class="seg-highlight" style="color:${col}">${s.count}</div>
+    <div class="seg-count">users · ${s.avg_venues} avg venues</div>
+    <div class="seg-stat-row">
+      <span class="seg-pill">Eng: ${s.avg_eng}</span>
+      <span class="seg-pill">Dwell: ${s.avg_dwell}m</span>
+      <span class="seg-pill">${topPref}</span>
+    </div>
+  </div>`;
+});
+
+function highlightSeg(i){
+  document.querySelectorAll('.seg-card').forEach((c,j)=>c.classList.toggle('active',i===j));
+}
+
+new Chart(document.getElementById('segPieChart').getContext('2d'),{
+  type:'doughnut',
+  data:{
+    labels:segNames,
+    datasets:[{data:segNames.map(s=>DATA.segments[s].count),backgroundColor:segNames.map(s=>SEG_COLORS[s]+'cc'),borderWidth:0}]
+  },
+  options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:12,boxWidth:10}}},cutout:'58%'}
+});
+
+new Chart(document.getElementById('segScatterChart').getContext('2d'),{
+  type:'scatter',
+  data:{
+    datasets:segNames.map(s=>({
+      label:s,
+      data:[{x:DATA.segments[s].avg_dwell,y:DATA.segments[s].avg_eng}],
+      backgroundColor:SEG_COLORS[s]+'cc',
+      pointRadius:Math.sqrt(DATA.segments[s].count)*2.5,
+      pointHoverRadius:Math.sqrt(DATA.segments[s].count)*3
+    }))
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b93a8',font:{family:'DM Mono',size:9},padding:10,boxWidth:8}}},
+    scales:{
+      x:{title:{display:true,text:'Avg Dwell (min)',color:'#4a5168',font:{size:10}},ticks:{color:'#4a5168'},grid:{color:'rgba(28,34,53,0.6)'}},
+      y:{title:{display:true,text:'Avg Engagement',color:'#4a5168',font:{size:10}},ticks:{color:'#4a5168'},grid:{color:'rgba(28,34,53,0.6)'}}
+    }
+  }
+});
+
+// Matrix table
+const segs=['Power Users','Event Seekers','Casual Visitors','Venue Explorers'];
+const matrixEl=document.getElementById('matrixTable');
+matrixEl.innerHTML=`<thead><tr><th>Venue</th>${segs.map(s=>`<th style="color:${SEG_COLORS[s]}">${s}</th>`).join('')}<th>Best Match</th></tr></thead><tbody></tbody>`;
+const mTbody=matrixEl.querySelector('tbody');
+VENUE_IDS.forEach(id=>{
+  const v=DATA.venues[id];
+  const m=DATA.matrix[id];
+  const maxSeg=segs.reduce((a,b)=>(m[a]||0)>(m[b]||0)?a:b);
+  const cells=segs.map(s=>{
+    const val=m[s]||0;
+    const maxVal=137;
+    const intensity=val/maxVal;
+    const col=SEG_COLORS[s];
+    return `<td><span class="heat-cell" style="background:${col}${Math.round(intensity*160+20).toString(16).padStart(2,'0')};color:${col}">${val}</span></td>`;
+  }).join('');
+  mTbody.innerHTML+=`<tr>
+    <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${v.color};margin-right:7px"></span>${v.name}</td>
+    ${cells}
+    <td><span class="v-badge" style="background:${SEG_COLORS[maxSeg]}22;color:${SEG_COLORS[maxSeg]};font-size:10px">${maxSeg}</span></td>
+  </tr>`;
+});
+
+// Sample recommendations
+const recData=[
+  {seg:'Power Users',color:SEG_COLORS['Power Users'],icon:'⚡',desc:'High engagement, multi-venue',recs:[{v:'TechHub Coworking',score:0.96,col:'#a3e635'},{v:'Harborview Bar',score:0.89,col:'#f5a623'},{v:'Grand Theater',score:0.78,col:'#e879f9'}]},
+  {seg:'Event Seekers',color:SEG_COLORS['Event Seekers'],icon:'🎭',desc:'Nightlife & music fans',recs:[{v:'Metro Nightclub',score:0.91,col:'#ff4d6d'},{v:'Grand Theater',score:0.87,col:'#e879f9'},{v:'Harborview Bar',score:0.74,col:'#f5a623'}]},
+  {seg:'Casual Visitors',color:SEG_COLORS['Casual Visitors'],icon:'☕',desc:'Food, social, shopping',recs:[{v:'Seaside Restaurant',score:0.85,col:'#6c63ff'},{v:'Central Coffee House',score:0.82,col:'#00f5c4'},{v:'Downtown Food Court',score:0.76,col:'#fb923c'}]},
+  {seg:'Venue Explorers',color:SEG_COLORS['Venue Explorers'],icon:'🧭',desc:'Business & fitness focus',recs:[{v:'TechHub Coworking',score:0.93,col:'#a3e635'},{v:'City Mall',score:0.84,col:'#38bdf8'},{v:'Riverwalk Park',score:0.79,col:'#fbbf24'}]},
+];
+const matchGrid=document.getElementById('matchGrid');
+recData.forEach(r=>{
+  matchGrid.innerHTML+=`<div class="match-card">
+    <div class="match-header">
+      <div class="match-avatar" style="background:${r.color}22">${r.icon}</div>
+      <div class="match-info"><h4>${r.seg}</h4><p>${r.desc}</p></div>
+    </div>
+    <div class="match-venues">${r.recs.map((rec,i)=>`
+      <div class="match-venue-row">
+        <span class="match-venue-name">${i+1}. ${rec.v}</span>
+        <div class="match-score-bar">
+          <div class="msb-bg"><div class="msb-fill" style="width:${(rec.score*100).toFixed(0)}%;background:${rec.col}"></div></div>
+          <span class="msb-val">${(rec.score*100).toFixed(0)}%</span>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+});
+
+// Trigger first venue + review page init on load
+initVenuePage();
+setTimeout(()=>{
+  initReviewPage();
+},100);
+</script>
+</body>
+</html>
