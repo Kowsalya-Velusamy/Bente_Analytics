@@ -56,7 +56,8 @@ body::before {
 .brand-name { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 .brand-name em { color: var(--accent); font-style: normal; }
 
-.nav-tabs { display: flex; gap: 2px; }
+.nav-tabs { display: flex; gap: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
 .nav-tab {
   padding: 0 20px; height: 56px;
   display: flex; align-items: center; gap: 8px;
@@ -126,7 +127,8 @@ body::before {
 }
 
 /* ── VENUE CHIPS ──────────────────────────────────────────── */
-.venue-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.venue-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.venue-selector::-webkit-scrollbar { display: none; }
 .v-chip {
   padding: 7px 16px; border: 1px solid var(--border);
   border-radius: 20px; background: transparent;
@@ -434,16 +436,209 @@ canvas { max-height: 220px; }
 ::-webkit-scrollbar-thumb  { background: var(--border2); border-radius: 3px; }
 
 /* ── RESPONSIVE ───────────────────────────────────────────── */
+
+/* Tablet — 1100px */
 @media (max-width: 1100px) {
-  .kpi-grid         { grid-template-columns: repeat(3,1fr); }
-  .chart-grid-3     { grid-template-columns: 1fr 1fr; }
-  .seg-cards        { grid-template-columns: repeat(2,1fr); }
-  .match-grid       { grid-template-columns: 1fr 1fr; }
+  .kpi-grid            { grid-template-columns: repeat(3,1fr); }
+  .chart-grid-3        { grid-template-columns: 1fr 1fr; }
+  .chart-grid-60-40,
+  .chart-grid-40-60    { grid-template-columns: 1fr; }
+  .overview-hero       { grid-template-columns: 1fr 1fr; }
+  .seg-cards           { grid-template-columns: repeat(2,1fr); }
+  .match-grid          { grid-template-columns: 1fr 1fr; }
+  .feature-grid        { grid-template-columns: 1fr 1fr; }
   .compare-grid.cols-3 { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 700px) {
-  .topbar { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px; }
-  .nav-tabs { overflow-x: auto; }
-  .page-inner { padding: 16px 16px 32px; }
-  .compare-stat-row { grid-template-columns: 1fr 1fr; }
+
+/* Large mobile — 768px */
+@media (max-width: 768px) {
+  /* Topbar — stack: [brand | right-controls] then [nav] */
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 14px 0;
+    gap: 0;
+    row-gap: 0;
+  }
+  .brand { margin-right: auto; }
+
+  /* Right controls sit on same row as brand */
+  .topbar-right {
+    order: 2;
+    margin-left: auto;
+    gap: 6px;
+    align-items: center;
+  }
+  .date-filter { gap: 4px; }
+  .date-input  { font-size: 9px; padding: 4px 7px; width: 88px; }
+  .apply-btn   { font-size: 9px; padding: 4px 9px; }
+
+  /* Live badge — force single line */
+  .live-badge {
+    font-size: 8px;
+    padding: 4px 8px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+  .live-dot { width: 5px; height: 5px; }
+
+  /* Nav tabs — full-width scrollable row below brand */
+  .nav-tabs {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    gap: 0;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  .nav-tab { padding: 0 14px; font-size: 12px; height: 40px; flex-shrink: 0; }
+
+  /* Page */
+  .page-inner     { padding: 14px 14px 36px; }
+  .page-header    { margin-bottom: 18px; }
+  .page-header h1 { font-size: 20px; }
+
+  /* All multi-column grids → single column */
+  .overview-hero,
+  .chart-grid-2,
+  .chart-grid-3,
+  .chart-grid-60-40,
+  .chart-grid-40-60,
+  .compare-grid.cols-2,
+  .compare-grid.cols-3 { grid-template-columns: 1fr; }
+
+  /* KPI grid — 2 columns; orphaned 5th card spans full width */
+  .kpi-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .kpi-grid > .kpi-card:last-child:nth-child(odd) { grid-column: span 2; }
+  .kpi-value { font-size: 26px; }
+
+  /* Hero numbers */
+  .hero-card .big-num { font-size: 38px; }
+
+  /* Venue chips — always scroll on mobile, never wrap */
+  .venue-selector {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .v-chip { flex-shrink: 0; }
+
+  /* Segment cards */
+  .seg-cards     { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .seg-highlight { font-size: 22px; }
+
+  /* Match / feature grids */
+  .match-grid   { grid-template-columns: 1fr; }
+  .feature-grid { grid-template-columns: 1fr; }
+
+  /* Algorithm flow — scroll with visible indicator */
+  .algo-flow {
+    gap: 0;
+    padding-bottom: 12px;
+    position: relative;
+  }
+  .algo-flow::after {
+    content: '→ scroll';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+  }
+  .algo-step      { min-width: 115px; padding: 10px 12px; }
+  .algo-step .step-name { font-size: 11px; }
+  .algo-step .step-desc { font-size: 9px; }
+
+  /* Tables — horizontal scroll wrapper */
+  .chart-card.full { overflow-x: auto; }
+  .venue-table,
+  .matrix-table,
+  .drill-table     { min-width: 560px; }
+
+  /* Comparison stats */
+  .compare-stat-row { grid-template-columns: repeat(3,1fr); }
+
+  /* Anomaly rows */
+  .anomaly-row   { flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+  .anomaly-venue { width: 100%; }
+  .anomaly-density,
+  .anomaly-z     { width: auto; text-align: left; }
+
+  /* Drill-down modal — slide up from bottom */
+  .drill-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 14px 14px 0 0;
+    margin-top: auto;
+  }
+  .drill-overlay { align-items: flex-end; }
+
+  /* Review radar */
+  .review-radar-wrap { height: 200px; }
+}
+
+/* Small mobile — 480px */
+@media (max-width: 480px) {
+  /* Topbar — keep date inputs, hide live badge text (keep dot only) */
+  .date-sep         { display: none; }
+  .date-input       { width: 96px; }
+  .live-badge       { max-width: 22px; overflow: hidden; padding: 4px 7px; gap: 0; border-radius: 50%; }
+  #liveBadgeText    { display: none; }
+
+  /* Page */
+  .page-inner     { padding: 12px 12px 32px; }
+  .page-header h1 { font-size: 18px; }
+  .section-label  { font-size: 9px; }
+
+  /* KPI */
+  .kpi-grid  { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-card  { padding: 14px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-label { font-size: 9px; margin-bottom: 8px; }
+
+  /* Hero */
+  .overview-hero      { grid-template-columns: 1fr; }
+  .hero-card .big-num { font-size: 42px; }
+  .hero-card          { padding: 18px; }
+
+  /* Venue chips — scrollable, fade-right to signal overflow */
+  .venue-selector {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  }
+  .v-chip { flex-shrink: 0; }
+
+  /* Segment cards — single column */
+  .seg-cards { grid-template-columns: 1fr; }
+
+  /* Rec section */
+  .rec-section  { padding: 16px; }
+  .rec-title    { font-size: 14px; }
+  .rec-subtitle { font-size: 12px; }
+
+  /* Comparison */
+  .comparison-bar   { flex-wrap: wrap; gap: 8px; }
+  .compare-stat-row { grid-template-columns: repeat(2,1fr); gap: 6px; }
+  .compare-stat-val { font-size: 16px; }
+
+  /* Chart cards */
+  .chart-card  { padding: 14px; }
+  .chart-title { font-size: 10px; margin-bottom: 12px; }
+
+  /* Anomaly panel — hide verbose columns on tiny screens */
+  .anomaly-sev { display: none; }
+  .anomaly-z   { display: none; }
+
+  /* Freq bars */
+  .freq-name { width: 46px; font-size: 11px; }
+
+  /* Drill modal */
+  .drill-modal  { max-height: 96vh; border-radius: 10px 10px 0 0; }
+  .drill-header { padding: 14px 16px 12px; }
+  .drill-title  { font-size: 13px; }
 }

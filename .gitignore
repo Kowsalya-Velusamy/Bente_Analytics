@@ -11,6 +11,10 @@ tests/node_modules/
 tests/coverage/
 tests/package-lock.json
 
+# Local dev tooling
+screenshots/
+take_screenshots.py
+
 # OS
 .DS_Store
 Thumbs.db
